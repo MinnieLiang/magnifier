@@ -1,0 +1,169 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>jquery 图片放大镜 图片类似放大镜展示鼠标滑过小图异步加载中图、大图</title>
+<style>
+*{ margin:0; padding:0; list-style:none;}
+/*放大镜*/ 
+.ZoomMain {margin:100px;width:395px;height:460px;float:left;position:relative;} 
+.ZoomMain .zoom {height:393px;width:393px;position:relative;border: 1px solid #dcdddd;} 
+.ZoomMain .zoom .move{position:absolute;left:0; top:0;display:none;width:195px; height:195px;
+	background:rgba(0,0,0,0.2);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#33000000,endColorstr=#33000000);zoom:1};
+
+:root .ZoomMain .zoom .move{filter:none\9;}
+
+.ZoomMain .zoomDetail{display:none;border:1px solid #DCDDDD;width:393px; height:393px; position:absolute;right:-405px;top:0px; overflow:hidden;} 
+.littleImg {margin-top:10px;height:54px;overflow:hidden;position:relative;} 
+.littleImg span {position: absolute;display:block;width:10px;height:55px;background:#999;cursor:pointer;} 
+.littleImg span em {display: none;width:10px;height:55px;} 
+.littleImg span.btnL {left:0;background: url(images/UltimatePageCssPos.gif) no-repeat left center;} 
+.littleImg span.btnL em {background: url(images/UltimatePageCssPos.gif) no-repeat -22px center;} 
+.littleImg span.btnR em {background: url(images/UltimatePageCssPos.gif) no-repeat right center;} 
+.littleImg span.btnR {right:0;background: url(images/UltimatePageCssPos.gif) no-repeat -11px center;} 
+.littleImg span.hover em {display:block;} 
+.littleImg .slideMain {width:343px;height:55px;margin-left:26px;overflow:hidden;position:relative;} 
+.littleImg .slideMain ul {position:absolute;left:0;width:355px;padding-top:1px;} 
+.littleImg .slideMain ul li {float:left;margin-right:6px;cursor:pointer;width:50px;height:50px;border:1px solid #dbdbdb;} 
+.littleImg .slideMain ul li.selected {border-color:#999;} 
+.littleImg .slideMain ul li img {float:left;width:50px;height:50px;} 
+/*放大镜end*/ 
+</style> 
+</head> 
+<body> 
+<!--放大镜-->
+<div class="ZoomMain"> 
+  <div class="zoom"> 
+         <span class="move"></span> 
+         <img width="393" height="390"  src="images/move/1347000569971.jpg" /> 
+  </div> 
+  <div class="littleImg"> 
+       <span class="btnL"><em></em></span> 
+       <span class="btnR"><em></em></span> 
+        <div class="slideMain"> 
+              <ul class="clearfix"> 
+                <li class="selected"><img width="50" height="50" src="images/move/1347000569971.jpg" medium-img="images/move/1347000569971.jpg" large-img="images/move/1347000569971.jpg" /></li> 
+                <li><img width="50" height="50" src="images/move/1347000590691.jpg" medium-img="images/move/1347000590691.jpg" large-img="images/move/1347000590691.jpg" /></li> 
+                <li><img width="50" height="50" src="images/move/1347000569972.jpg" medium-img="images/move/1347000569972.jpg" large-img="images/move/1347000569972.jpg" /></li> 
+                <li><img width="50" height="50" src="images/move/1347000569973.jpg" medium-img="images/move/1347000569973.jpg" large-img="images/move/1347000569973.jpg" /></li> 
+                <li><img width="50" height="50" src="images/move/1347000569974.jpg" medium-img="images/move/1347000569974.jpg" large-img="images/move/1347000569974.jpg" /></li> 
+                <li><img width="50" height="50" src="images/move/1347000569975.jpg" medium-img="images/move/1347000569975.jpg" large-img="images/move/1347000569975.jpg" /></li> 
+                <li><img width="50" height="50" src="images/move/1347000569976.jpg" medium-img="images/move/1347000569976.jpg" large-img="images/move/1347000569976.jpg" /></li> 
+                <li><img width="50" height="50" src="images/move/1347000569977.jpg" medium-img="images/move/1347000569977.jpg" large-img="images/move/1347000569977.jpg" /></li>
+              </ul> 
+        </div> 
+  </div> 
+  <div class="zoomDetail"> 
+            <img width="701" height="701" src="images/move/1347000569971.jpg" /> 
+  </div> 
+</div> 
+<!--放大镜end--> 
+　<script type="text/javascript" src="js/jquery-1.4.2.min.js"></script>　  
+ <script type="text/javascript"> 
+/**  
+@功能：实现细节放大，图片对应切换，自由定义css样式实现自由铺满视口等功能 
+@说明：基于jQ的放大镜插件，可根据需要自由调整布局来适应各种设计效果 
+*/
+(function(){ 
+        function Zoom(object){ 
+                this.zoomArea=$(".zoom",object);//保存促发放大效果的区域 
+                this.moveArea=$(".move",object);//保存移动区域 
+                this.zoomDetail=$(".zoomDetail",object);//保存放大镜区域 
+                this.zoomDetailImg=$("img",this.zoomDetail);//保存放大镜里面的图 
+                this.zoomAreaWidth=this.zoomArea.width(); 
+                this.moveAreaWidth=this.moveArea.width(); 
+                this.zoomAreaHeight=this.zoomArea.height(); 
+                this.moveAreaHeight=this.moveArea.height(); 
+                this.zoomDetailWidth=this.zoomDetail.width(); 
+                this.zoomDetailHeight=this.zoomDetail.height(); 
+                this.zoomAreaOffset=this.zoomArea.offset();//初始化放大区域在视口中的相对偏移; 
+                this.XY=null;//初始化鼠标相对于放大区域的偏移偏移值 
+                this.moveBili=null;// 
+                var _this_=this; 
+                this.zoomArea.mousemove(function(e){//当鼠标在放大区域移动的时候执行 
+                                                 _this_.move(e.pageX,e.pageY);    
+                                        }).mouseover(function(){ 
+                                            _this_.moveArea.show(); 
+                                            _this_.zoomDetail.show(); 
+                                            }).mouseout(function(){ 
+                                                _this_.moveArea.hide(); 
+                                                _this_.zoomDetail.hide();                                                
+                                                }); 
+                this.calculate();//初始化并计算出需要的比例值 
+                //以下是小图部分的功能实现 
+                this.l=0; 
+                this.scrollObj=$(".slideMain ul",object);//保存ul滚动对象 
+                this.lis=this.scrollObj.children();//保存小图片列表 
+                this.btnR=$(".btnR",object);//保存右边按钮 
+                this.btnL=$(".btnL",object);//保存左边边按钮 
+                this.lis.click(function(){ 
+                                        _this_.changeImgSrc(this); 
+                                        }); 
+                if(this.lis.length>6){//判断图片数是否超出显示区域，是的话就注册滚动事件 
+                    this.s=this.lis.length-6;//获取多余出来的图片数 
+                    this.scrollObj.width(60*this.lis.length+"px");//当图片数超出默认值时，设置ul的宽度 
+                    this.btnL.click(function(){_this_.scrollRight();}).mouseover(function(){$(this).addClass("hover")}).mouseout(function(){$(this).removeClass("hover");}); 
+                    this.btnR.click(function(){_this_.scrollLeft();}).mouseover(function(){$(this).addClass("hover")}).mouseout(function(){$(this).removeClass("hover");});; 
+                } 
+              }; 
+        Zoom.prototype={ 
+            scrollLeft:function(){ 
+                if(Math.abs(this.l)==this.s){return}; 
+                this.l--; 
+                this.scrollObj.animate({left:this.l*58+"px"},"fast");    
+                }, 
+            scrollRight:function(){ 
+                if(this.l==0){return}; 
+                this.l++; 
+                this.scrollObj.animate({left:this.l*58+"px"},"fast"); 
+                }, 
+            changeImgSrc:function(o){ 
+                //改变标识样式 
+                $(o).addClass("selected").siblings().removeClass("selected"); 
+                this.zoomArea.find("img").attr("src",$(o).find("img").attr("medium-img")); 
+                this.zoomDetailImg.attr("src",$(o).find("img").attr("medium-img")); 
+
+                }, 
+            move:function(x,y){//鼠标在放大区域移动的时候执行的函数 
+                    this.XY=this.mousePosAndSetPos(x,y);//计算出鼠标相对于放大区域的x,y值 
+                    //设置滑块的位置 
+                    this.moveArea.css({ 
+                                      left:this.XY.offsetX+"px", 
+                                      top:this.XY.offsetY+"px"
+                                      }); 
+                    //设置大图在细节位置 
+                    this.zoomDetailImg.css({ 
+                                           marginLeft:-this.XY.offsetX*this.moveBili+"px", 
+                                           marginTop:-this.XY.offsetY*this.moveBili+"px"
+                                           }); 
+                }, 
+            mousePosAndSetPos:function(x,y){//实时计算并设置滑块的位置 
+                x=x-this.zoomAreaOffset.left-this.moveArea.width()/2; 
+                y=y-this.zoomAreaOffset.top-this.moveArea.height()/2; 
+                x=x<0?0:x; 
+                y=y<0?0:y; 
+                x=x>(this.zoomAreaWidth-this.moveAreaWidth)?this.zoomAreaWidth-this.moveAreaWidth:x; 
+                y=y>(this.zoomAreaHeight-this.moveAreaHeight)?this.zoomAreaHeight-this.moveAreaHeight:y; 
+                return { 
+                        offsetX:x, 
+                        offsetY:y 
+                        };   
+                }, 
+            calculate:function(){//计算函数 
+                    var widthBili,heightBili; 
+                    //计算移动的滑块与放大镜铺面显示的比例宽高 
+                    widthBili=(this.zoomAreaWidth*this.zoomDetailWidth)/this.moveAreaWidth; 
+                    heightBili=(this.zoomAreaHeight*this.zoomDetailHeight)/this.moveAreaHeight; 
+                    //把比出来的宽高 
+                    this.zoomDetailImg.css({width:widthBili+"px",height:heightBili+"px"}); 
+                    //返回移动的比例 
+                    this.moveBili=(widthBili-this.zoomDetailWidth)/(this.zoomAreaWidth-this.moveAreaWidth); 
+                } 
+            }; 
+          var zoom=new Zoom($(".ZoomMain").eq(0));     
+})();  
+</script>
+</body>
+</html>
+  
